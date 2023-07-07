@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
+import joi from 'joi';
 
 import bcrypt from "bcrypt";
 import { v4 as uuid } from "uuid";
@@ -22,7 +23,7 @@ const mongoClient = new MongoClient(process.env.DATABASE_URL);
 
 export const db = mongoClient.db()
 
-const usuarioSchema = joi.object({
+const userSchema = joi.object({
     nome: joi.string().required(),
     email: joi.string().email().required(),
     senha: joi.string().required(),
@@ -31,7 +32,7 @@ const usuarioSchema = joi.object({
 app.post("/cadastro", async (req,res)=>{
     const { nome, email, senha } = req.body;
 
-    const validation = usuarioSchema.validate(req.body, { abortEarly: false });
+    const validation = userSchema.validate(req.body, { abortEarly: false });
 
     if (validation.error) {
         const errors = validation.error.details.map((detail) => detail.message);
