@@ -4,7 +4,7 @@ import { MongoClient } from 'mongodb';
 import dotenv from 'dotenv';
 import joi from 'joi';
 
-import bcrypt from "bcrypt";
+import bcrypt, { compareSync } from "bcrypt";
 import { v4 as uuid } from "uuid";
 
 const app = express();
@@ -24,13 +24,13 @@ const mongoClient = new MongoClient(process.env.DATABASE_URL);
 export const db = mongoClient.db()
 
 const userSchema = joi.object({
-    nome: joi.string().required(),
+    name: joi.string().required(),
     email: joi.string().email().required(),
-    senha: joi.string().required(),
+    password: joi.string().required().min(3),
 });
 
 app.post("/cadastro", async (req,res)=>{
-    const { nome, email, senha } = req.body;
+    const { name, email, password } = req.body;
 
     const validation = userSchema.validate(req.body, { abortEarly: false });
 
@@ -45,9 +45,9 @@ app.post("/cadastro", async (req,res)=>{
             return res.status(409).send("E-mail já cadastrado");
         }
 
-        const hash = bcrypt.hashSync(senha, 10);
+        const hash = bcrypt.hashSync(password, 10);
 
-        await db.collection("users").insertOne({ nome, email, senha: hash });
+        await db.collection("users").insertOne({ name, email, password: hash });
         res.sendStatus(201);
     } catch (err) {
         res.status(500).send(err.message);
@@ -63,7 +63,7 @@ app.post("/", async (req,res)=>{
             return res.status(404).send("Usuário não cadastrado");
         }
 
-        const acertouSenha = bcrypt.compareSync(senha, usuario.senha);
+        const acertouSenha = bcrypt.compareSync(senha, usuario.password);
         if (!acertouSenha){
             return res.status(401).send("Senha incorreta");
         }
@@ -72,7 +72,7 @@ app.post("/", async (req,res)=>{
         const token = uuid();
         await db.collection("session").insertOne({ token, idUsuario: usuario._id });
 
-        res.send(token);
+        res.status(201).send(token);
     } catch (err) {
         res.status(500).send(err.message);
     }
