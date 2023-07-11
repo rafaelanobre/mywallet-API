@@ -1,6 +1,7 @@
 import { ObjectId } from "mongodb";
 import { db } from "../database/database.connection.js";
 import { transacaoSchema } from "../schemas/transacao.schemas.js";
+import dayjs from "dayjs";
 
 export async function adicionaTransacao(req,res) {
     const { tipo } = req.params;
@@ -10,7 +11,7 @@ export async function adicionaTransacao(req,res) {
 
     if (!token) return res.sendStatus(401);
 
-    const transacao = { valor, descricao, tipo }
+    const transacao = { valor, descricao, tipo, data: dayjs().format("DD/MM") }
 
     const validation = transacaoSchema.validate(transacao, { abortEarly: false });
 
